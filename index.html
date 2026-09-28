@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POLITCASE: Симулятор Кейсов</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #0b0c10; color: #ffffff; text-align: center; padding: 20px; margin: 0; }
+        .container { width: 850px; margin: 20px auto; background: #14161f; padding: 25px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.7); }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; background: #1a1d29; padding: 15px 25px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #282c3d; }
+        .logo { font-size: 20px; font-weight: bold; letter-spacing: 2px; color: #00e5ff; }
+        .balance-box { font-size: 20px; font-weight: bold; color: #00ff66; }
+        .section-title { font-size: 16px; color: #626687; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 25px; font-weight: bold; text-align: left; padding-left: 10px; }
+        .cases-grid { display: flex; justify-content: center; gap: 40px; margin-bottom: 40px; }
+        .case-card { width: 260px; cursor: pointer; transition: transform 0.2s; }
+        .case-card:hover { transform: translateY(-5px); }
+        .case-image-wrap { position: relative; width: 100%; height: 160px; background: #0f1118; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
+        .case-image-wrap.blue-theme { border: 2px solid #0055ff; box-shadow: inset 0 0 20px rgba(0,85,255,0.3); }
+        .case-image-wrap.purple-theme { border: 2px solid #aa00ff; box-shadow: inset 0 0 20px rgba(170,0,255,0.3); }
+        .badge-top { position: absolute; top: 12px; right: 12px; background: #00e5ff; color: #000; font-size: 10px; font-weight: bold; padding: 3px 8px; border-radius: 4px; }
+        .case-fake-3d { font-size: 70px; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.7)); }
+        .case-name { font-size: 16px; font-weight: bold; margin: 15px 0 10px 0; color: #fff; }
+        .case-price-tag { display: inline-block; border: 2px solid #00ff66; color: #00ff66; background: rgba(0,255,102,0.05); padding: 6px 20px; font-weight: bold; border-radius: 6px; font-size: 14px; }
+        .navigation-zone { text-align: left; margin-bottom: 15px; }
+        .btn-back { background: none; border: none; color: #626687; cursor: pointer; font-size: 14px; font-weight: bold; transition: color 0.2s; }
+        .btn-back:hover { color: #fff; }
+        .roulette-wrapper { position: relative; width: 820px; height: 240px; background: #0f1015; margin: 25px auto; overflow: hidden; border: 2px solid #2d3043; border-radius: 6px; }
+        .roulette-marker { position: absolute; left: 410px; top: 0; bottom: 0; width: 4px; background-color: #e54343; z-index: 10; box-shadow: 0 0 10px #e54343; }
+        .roulette-tape { display: flex; position: absolute; left: 0; top: 10px; height: 220px; }
+        .card { width: 130px; height: 220px; margin-right: 8px; background: #1a1d29; border-bottom: 5px solid #fff; box-sizing: border-box; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 10px; }
+        .card img { width: 110px; height: 130px; object-fit: cover; border-radius: 4px; }
+        .card-name { font-size: 11px; font-weight: bold; text-align: center; height: 32px; display: flex; align-items: center; }
+        .card-faction { font-size: 9px; color: #b0b3c6; }
+        .rare-democrat { border-bottom-color: #4b69ff; background: linear-gradient(to top, rgba(75,105,255,0.15), #1a1d29); }
+        .rare-communist { border-bottom-color: #d32ce6; background: linear-gradient(to top, rgba(211,44,230,0.15), #1a1d29); }
+        .rare-fascist { border-bottom-color: #eb4b4b; background: linear-gradient(to top, rgba(235,75,75,0.15), #1a1d29); }
+        .btn-open { background: linear-gradient(to bottom, #00ff66, #00b344); color: black; border: none; padding: 15px 50px; font-size: 18px; border-radius: 6px; cursor: pointer; font-weight: bold; text-transform: uppercase; box-shadow: 0 4px 15px rgba(0,255,102,0.3); }
+        .btn-open:disabled { background: #282c3d !important; color: #626687 !important; cursor: not-allowed; box-shadow: none; }
+        .win-popup { margin: 20px auto; padding: 20px; background: #1a1d29; border-radius: 8px; border: 1px solid #282c3d; width: 400px; }
+        .win-alert { color: #00ff66; font-size: 18px; font-weight: bold; margin-bottom: 12px; }
+        .win-popup img { width: 120px; height: 150px; object-fit: cover; border-radius: 6px; border: 2px solid #fff; }
+        .btn-sell { background: #e54343; color: white; border: none; padding: 10px 24px; font-size: 14px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .inventory-section { margin-top: 40px; background: #0f1118; padding: 20px; border-radius: 8px; border: 1px solid #282c3d; text-align: left; }
+        .inventory-title { font-size: 16px; font-weight: bold; color: #626687; border-bottom: 1px solid #282c3d; padding-bottom: 10px; margin-bottom: 15px; }
+        .inventory-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+        #emptyInvText { color: #4e5066; font-size: 14px; margin: 10px auto; }
+        .inv-card { width: 90px; height: 140px; background: #1a1d29; border-bottom: 3px solid #fff; border-radius: 4px; padding: 5px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; box-sizing: border-box; }
+        .inv-card img { width: 80px; height: 90px; object-fit: cover; }
+        .inv-card .inv-name { font-size: 9px; font-weight: bold; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+        .chances-info { margin-top: 25px; color: #626687; display: flex; justify-content: center; gap: 20px; font-size: 13px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top-bar">
+            <div class="logo">POLITCASE</div>
+            <div class="balance-box">Баланс: <span id="balanceValue">1000</span>$</div>
+        </div>
+
+        <!-- ЭКРАН 1: ВИТРИНА КЕЙСОВ -->
+        <div id="showcaseScreen">
+            <div class="section-title">Доступные кейсы</div>
+            <div class="cases-grid">
+                <div class="case-card" id="btnCasePoliticians">
+                    <div class="case-image-wrap blue-theme">
+                        <span class="badge-top">TOP</span>
+                        <div class="case-fake-3d">💼</div>
+                    </div>
+                    <div class="case-name">King's Treasure</div>
+                    <div class="case-price-tag">100.00$</div>
+                </div>
+
+                <div class="case-card" id="btnCaseCommanders">
+                    <div class="case-image-wrap purple-theme">
+                        <span class="badge-top">TOP</span>
+                        <div class="case-fake-3d">🎖️</div>
+                    </div>
+                    <div class="case-name">Overlimit</div>
+                    <div class="case-price-tag">100.00$</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ЭКРАН 2: РУЛЕТКА -->
+        <div id="openScreen" style="display: none;">
+            <div class="navigation-zone">
+                <button class="btn-back" id="backToCasesBtn">← Назад к кейсам</button>
+            </div>
+            <h1 id="caseTitle">Название кейса</h1>
+            
+            <div class="roulette-wrapper">
+                <div class="roulette-marker"></div>
+                <div class="roulette-tape" id="rouletteTape"></div>
+            </div>
+            
+            <div class="action-zone">
+                <button class="btn-open" id="openBtn">Открыть за 100$</button>
+            </div>
+            
+            <div class="win-popup" id="winPopup" style="display: none;">
+                <div class="win-alert">Вы залутали:</div>
+                <img id="winImg" src="" alt="">
+                <h2 id="winName">Имя</h2>
+                <p id="winFaction">Фракция</p>
+                <button class="btn-sell" id="sellBtn">Продать за 0$</button>
+            </div>
+        </div>
+
+        <!-- ИНВЕНТАРЬ -->
+        <div class="inventory-section">
+            <div class="inventory-title">Ваш Инвентарь (Коллекция)</div>
+            <div class="inventory-grid" id="inventoryGrid">
+                <p id="emptyInvText">Ваш инвентарь пока пуст. Выберите и откройте кейс выше!</p>
+            </div>
+        </div>
+    </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const casesData = {
+            politicians: {
+                title: "King's Treasure (Политики)",
+                democrats: [
+                    { name: "Франклин Рузвельт", rarity: "rare-democrat", faction: "Демократы", price: 20, img: "https://wikimedia.org" },
+                    { name: "Уинстон Черчилль", rarity: "rare-democrat", faction: "Демократы", price: 20, img: "https://wikimedia.org" },
+                    { name: "Джон Кеннеди", rarity: "rare-democrat", faction: "Демократы", price: 20, img: "https://wikimedia.org" }
+                ],
+                communists: [
+                    { name: "Владимир Ленин", rarity: "rare-communist", faction: "Коммунисты", price: 150, img: "https://wikimedia.org" },
+                    { name: "Иосиф Сталин", rarity: "rare-communist", faction: "Коммунисты", price: 150, img: "https://wikimedia.org" }
+                ],
+                fascists: [
+                    { name: "Адольф Гитлер", rarity: "rare-fascist", faction: "Фашисты / Нацисты", price: 700, img: "https://wikimedia.org" },
+                    { name: "Бенито Муссолини", rarity: "rare-fascist", faction: "Фашисты / Нацисты", price: 700, img: "https://wikimedia.org" }
+                ]
+            },
+            commanders: {
+                title: "Overlimit (Командиры)",
+                democrats: [
+                    { name: "Дуайт Эйзенхауэр", rarity: "rare-democrat", faction: "Демократы (США)", price: 20, img: "https://wikimedia.org" },
+                    { name: "Бернард Монтгомери", rarity: "rare-democrat", faction: "Демократы", price: 20, img: "https://wikimedia.org" }
+                ],
+                communists: [
+                    { name: "Георгий Жуков", rarity: "rare-communist", faction: "Коммунисты (СССР)", price: 150, img: "https://wikimedia.org" },
+                    { name: "Константин Рокоссовский", rarity: "rare-communist", faction: "Коммунисты (СССР)", price: 150, img: "https://wikimedia.org" }
+                ],
+                fascists: [
+                    { name: "Эрвин Роммель", rarity: "rare-fascist", faction: "Фашисты / Нацисты", price: 700, img: "https://wikimedia.org" },
+                    { name: "Хайнц Гудериан", rarity: "rare-fascist", faction: "Фашисты / Нацисты", price: 700, img: "https://wikimedia.org" }
+                ]
+            }
+        };
+
+        let currentCase = 'politicians', balance = 1000, inventory = [], lastWinner = null;
+        const CASE_COST = 100, CARD_WIDTH = 138, WIN_INDEX = 25;
+
+        const showcaseScreen = document.getElementById('showcaseScreen'), openScreen = document.getElementById('openScreen');
+        const btnCasePoliticians = document.getElementById('btnCasePoliticians'), btnCaseCommanders = document.getElementById('btnCaseCommanders'), backToCasesBtn = document.getElementById('backToCasesBtn');
+        const openBtn = document.getElementById('openBtn'), tape = document.getElementById('rouletteTape'), winPopup = document.getElementById('winPopup');
+        const winName = document.getElementById('winName'), winFaction = document.getElementById('winFaction'), winImg = document.getElementById('winImg'), sellBtn = document.getElementById('sellBtn');
+        const balanceValue = document.getElementById('balanceValue'), inventoryGrid = document.getElementById('inventoryGrid'), emptyInvText = document.getElementById('emptyInvText'), caseTitle = document.getElementById('caseTitle');
+
+        function getRandomCharacter() {
+            const rand = Math.floor(Math.random() * 100);
+            const activePool = casesData[currentCase];
+            if (rand < 90) return activePool.democrats[Math.floor(Math.random() * activePool.democrats.length)];
+            if (rand < 98) return activePool.communists[Math.floor(Math.random() * activePool.communists.length)];
+            return activePool.fascists[Math.floor(Math.random() * activePool.fascists.length)];
+        }
+
+        function initTape() {
+            tape.style.transition = 'none'; tape.style.transform = 'translateX(0px)'; tape.innerHTML = '';
+            for (let i = 0; i < 35; i++) {
+                const p = getRandomCharacter();
+                const card = document.createElement('div');
+                card.className = `card ${p.rarity}`;
+                card.innerHTML = `<img src="${p.img}" alt=""><div class="card-name">${p.name}</div><div class="card-faction">${p.faction}</div>`;
+                tape.appendChild(card);
+            }
+        }
+
+        function enterCaseScreen(caseType) {
+            currentCase = caseType; caseTitle.textContent = casesData[caseType].title;
+            showcaseScreen.style.display = 'none'; openScreen.style.display = 'block'; winPopup.style.display = 'none';
+            initTape();
+        }
+
+        function updateInventoryUI() {
+            if (inventory.length === 0) emptyInvText.style.display = 'block';
+            else {
+                emptyInvText.style.display = 'none';
+                (inventoryGrid.querySelectorAll('.inv-card')).forEach(el => el.remove());
+                inventory.forEach(p => {
+                    const card = document.createElement('div'); card.className = `inv-card ${p.rarity}`;
+                    card.innerHTML = `<img src="${p.img}"><div class="inv-name">${p.name}</div>`;
+                    inventoryGrid.appendChild(card);
+                });
+            }
+        }
+
+        btnCasePoliticians.addEventListener('click', () => enterCaseScreen('politicians'));
+        btnCaseCommanders.addEventListener('click', () => enterCaseScreen('commanders'));
+        backToCasesBtn.addEventListener('click', () => { openScreen.style.display = 'none'; showcaseScreen.style.display = 'block'; });
+
+        openBtn.addEventListener('click', () => {
+            if (balance < CASE_COST) { alert('Недостаточно денег на балансе!'); return; }
+            balance -= CASE_COST; balanceValue.textContent = balance;
+            openBtn.disabled = true; backToCasesBtn.disabled = true; winPopup.style.display = 'none'; initTape();
+
+            const winner = Object.assign({}, getRandomCharacter()); lastWinner = winner;
+            const winCard = tape.children[WIN_INDEX];
+            winCard.className = `card ${winner.rarity}`;
+            winCard.innerHTML = `<img src="${winner.img}" alt=""><div class="card-name">${winner.name}</div><div class="card-faction">${winner.faction}</div>`;
+
+            const finalPosition = -(WIN_INDEX * CARD_WIDTH - 410 + 69);
+            setTimeout(() => { tape.style.transition = 'transform 5s cubic-bezier(0.1, 0.8, 0.1, 1)'; tape.style.transform = `translateX(${finalPosition}px)`; }, 50);
+
+            setTimeout(() => {
+                winName.textContent = winner.name; winFaction.textContent = 'Фракция: ' + winner.faction; winImg.src = winner.img; sellBtn.textContent = `Продать за ${winner.price}$`;
+                if (winner.rarity === 'rare-democrat') { winName.style.color = '#4b69ff'; winImg.style.borderColor = '#4b69ff'; }
+                if (winner.rarity === 'rare-communist') { winName.style.color = '#d32ce6'; winImg.style.borderColor = '#d32ce6'; }
+                if (winner.rarity === 'rare-fascist') { winName.style.color = '#eb4b4b'; winImg.style.borderColor = '#eb4b4b'; }
+                winPopup.style.display = 'block'; inventory.push(winner); updateInventoryUI();
+                openBtn.disabled = false; backToCasesBtn.disabled = false;
+            }, 5100);
+        });
+
+        sellBtn.addEventListener('click', () => {
+            if (!lastWinner) return;
+            balance += lastWinner.price; balanceValue.textContent = balance;
+            inventory.pop(); updateInventoryUI(); winPopup.style.display = 'none'; lastWinner = null;
+        });
+    });
+    </script>
+</body>
+</html>
